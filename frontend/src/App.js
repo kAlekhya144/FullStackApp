@@ -10,18 +10,18 @@ function App() {
   }, []);
 
   const loadEmployees = async () => {
-    const res = await axios.get('http://localhost:8080/api/employees');
+    const res = await axios.get('http://localhost:9090/api/employees');
     setEmployees(res.data);
   };
 
   const addEmployee = async () => {
-    await axios.post('http://localhost:8080/api/employees', form);
+    await axios.post('http://localhost:9090/api/employees', form);
     setForm({ name: '', department: '', salary: '' });
     loadEmployees();
   };
 
   const deleteEmployee = async (id) => {
-    await axios.delete(`http://localhost:8080/api/employees/${id}`);
+    await axios.delete(`http://localhost:9090/api/employees/${id}`);
     loadEmployees();
   };
 
