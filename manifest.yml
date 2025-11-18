@@ -1,0 +1,183 @@
+# ===========================
+# FRONTEND DEPLOYMENT
+# ===========================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        tier: frontend
+    spec:
+      containers:
+      - name: frontendapp
+        image: kolaalekhya/fullstack-frontend:v7
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    tier: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
+
+
+# ===========================
+# BACKEND DEPLOYMENT
+# ===========================
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: backend
+  template:
+    metadata:
+      labels:
+        tier: backend
+    spec:
+      containers:
+      - name: backendapp
+        image: kolaalekhya/fullstack-backend:v3
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://mysql-service:3306/employee_info"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "alekhya"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "alekhya1"
+        - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+          value: "update"
+        ports:
+        - containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    tier: backend
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
+
+
+# ===========================
+# MYSQL (DB)
+# ===========================
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: database
+  template:
+    metadata:
+      labels:
+        tier: database
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpass"
+        - name: MYSQL_DATABASE
+          value: "employee_info"
+        - name: MYSQL_USER
+          value: "alekhya"
+        - name: MYSQL_PASSWORD
+          value: "alekhya1"
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+spec:
+  selector:
+    tier: database
+  ports:
+  - port: 3306
+    targetPort: 3306
+  type: ClusterIP
+
+
+# ===========================
+# INGRESS
+# ===========================
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fullstack-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: fullstack.frontend.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+
+  - host: fullstack.backend.com
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 8080

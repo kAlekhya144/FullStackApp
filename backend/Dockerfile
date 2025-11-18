@@ -4,7 +4,7 @@ COPY src ./src
 COPY pom.xml .
 RUN mvn clean package
 
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk
 WORKDIR /app
 COPY --from=builder /backendApp/target/employee-backend-1.0.0.jar .
 ENTRYPOINT ["java", "-jar", "employee-backend-1.0.0.jar"]

@@ -7,8 +7,7 @@ import com.example.employee.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @RestController
-// @CrossOrigin(origins = "http://localhost:3000")  // React frontend
-    @CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:3000")  // React frontend
 @RequestMapping("/api/employees")
 public class EmployeeController {
 
